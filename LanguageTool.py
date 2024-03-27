@@ -352,10 +352,13 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         self.view.run_command("clear_language_problems")
 
         language = self.view.settings().get('language_tool_language', 'auto')
+        username = settings.get('username', '')
+        apikey = settings.get('apikey', '')
+
         ignored_ids = [rule['id'] for rule in load_ignored_rules()]
 
         matches = LTServer.getResponse(server_url, check_text, language,
-                                       ignored_ids)
+                                       ignored_ids, username, apikey)
 
         if matches == None:
             set_status_bar('could not parse server response (may be due to'
