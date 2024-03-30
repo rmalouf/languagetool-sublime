@@ -26,11 +26,6 @@ def move_caret(view, i, j):
     view.sel().add(sublime.Region(target, target + j - i))
 
 
-def set_status_bar(message):
-    """Change status bar message."""
-    sublime.status_message(message)
-
-
 def select_problem(view, problem):
     reg = view.get_regions(problem["regionKey"])[0]
     move_caret(view, reg.a, reg.b)
@@ -111,7 +106,7 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
                     if (not is_problem_solved(v, p)) and (r.a < sel.begin()):
                         select_problem(v, p)
                         return
-        set_status_bar("no further language problems to fix")
+            sublime.status_message("no further language problems to fix")
         sublime.active_window().run_command(
             "hide_panel", {"panel": "output.languagetool"}
         )
@@ -146,7 +141,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
             if problem_region == selected_region:
                 break
         else:
-            set_status_bar("no language problem selected")
+            sublime.status_message("no language problem selected")
             return
 
         next_caret_pos = problem_region.a
@@ -392,7 +387,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             )
 
         if matches == None:
-            set_status_bar(
+            sublime.status_message(
                 "could not parse server response (may be due to"
                 " quota if using https://languagetool.org)"
             )
@@ -444,7 +439,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         if problems:
             select_problem(self.view, problems[0])
         else:
-            set_status_bar("no language problems were found :-)")
+            sublime.status_message("no language problems were found :-)")
 
         self.view.problems = problems
 
@@ -514,7 +509,7 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
             p for p in problems if sel.contains(v.get_regions(p["regionKey"])[0])
         ]
         if not selected:
-            set_status_bar("select a problem to deactivate its rule")
+            sublime.status_message("select a problem to deactivate its rule")
         elif len(selected) == 1:
             rule = {"id": selected[0]["rule"], "description": selected[0]["message"]}
             ignored.append(rule)
@@ -524,9 +519,9 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
             problems = [p for p in problems if p["rule"] != rule["id"]]
             v.run_command("goto_next_language_problem")
             save_ignored_rules(ignored)
-            set_status_bar("deactivated rule %s" % rule)
+            sublime.status_message("deactivated rule %s" % rule)
         else:
-            set_status_bar(
+            sublime.status_message(
                 "there are multiple selected problems;" " select only one to deactivate"
             )
 
@@ -539,7 +534,7 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
             ruleList = [[rule["id"], rule["description"]] for rule in ignored]
             self.view.window().show_quick_panel(ruleList, activate_callback_wrapper)
         else:
-            set_status_bar("there are no ignored rules")
+            sublime.status_message("there are no ignored rules")
 
     def activate_callback(self, i):
         ignored = load_ignored_rules()
@@ -547,7 +542,7 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
             activate_rule = ignored[i]
             ignored.remove(activate_rule)
             save_ignored_rules(ignored)
-            set_status_bar("activated rule %s" % activate_rule["id"])
+            sublime.status_message("activated rule %s" % activate_rule["id"])
 
 
 class LanguageToolListener(sublime_plugin.EventListener):
