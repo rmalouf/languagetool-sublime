@@ -333,7 +333,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         sublime.set_timeout_async(lambda: self.check_text(force_server))
 
     def get_text(self, check_region):
-
         spelling_selector = self.view.settings().get("spelling_selector")
 
         chunks = []
@@ -419,10 +418,14 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             problem["orgContent"] = self.view.substr(region)
             problem["regionKey"] = region_key
 
-            #style = sublime.DRAW_SQUIGGLY_UNDERLINE + sublime.DRAW_NO_FILL + sublime.DRAW_NO_OUTLINE
+            # style = sublime.DRAW_SQUIGGLY_UNDERLINE + sublime.DRAW_NO_FILL + sublime.DRAW_NO_OUTLINE
             style = sublime.DRAW_NO_FILL
             self.view.add_regions(
-                region_key, [region], highlight_scope, "", style,
+                region_key,
+                [region],
+                highlight_scope,
+                "",
+                style,
             )
 
         shifter = lambda problem: shift_offset(problem, check_region.a)
@@ -443,7 +446,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         else:
             sublime.status_message("no language problems were found :-)")
 
-        self.view.settings().set('problems', problems)
+        self.view.settings().set("problems", problems)
 
 
 def compose(f1, f2):
