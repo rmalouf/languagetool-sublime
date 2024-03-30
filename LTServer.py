@@ -5,10 +5,10 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 
-def getResponse(server, text, language, disabledRules, username, apikey):
+def getResponse(server, data, language, disabledRules, username, apikey):
     payload = {
         "language": language,
-        "text": text.encode("utf8"),
+        "data": data.encode("utf8"),
         "User-Agent": "sublime",
         "disabledRules": ",".join(disabledRules),
     }

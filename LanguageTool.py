@@ -5,14 +5,15 @@ This is a simple Sublime Text plugin for checking grammar. It passes buffer
 content to LanguageTool (via http) and highlights reported problems.
 """
 
+import fnmatch
+import itertools
+import json
+import os.path
+import subprocess
+
 import sublime
 import sublime_plugin
 from sublime_lib import ActivityIndicator
-import subprocess
-import os.path
-import fnmatch
-import itertools
-
 
 from . import LTServer
 from . import LanguageList
@@ -336,6 +337,35 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
     def run(self, edit, force_server=None):
         sublime.set_timeout_async(lambda: self.check_text(force_server))
 
+    def get_text(self, check_region):
+
+        # check_text = self.view.substr(check_region)
+        spelling_selector = self.view.settings().get("spelling_selector")
+
+        chunks = []
+        current_chunk = ""
+        current_type = None
+        for span, scope in self.view.extract_tokens_with_scopes(check_region):
+            chunk_type = sublime.score_selector(scope, spelling_selector)
+            if chunk_type == current_type:
+                current_chunk += self.view.substr(span)
+            else:
+                if current_type == 0:
+                    type_name = "markup"
+                else:
+                    type_name = "text"
+                if current_chunk:
+                    chunks.append({type_name: current_chunk})
+                current_type = chunk_type
+                current_chunk = self.view.substr(span)
+        if current_type == 0:
+            type_name = "markup"
+        else:
+            type_name = "text"
+        if current_chunk:
+            chunks.append({type_name: current_chunk})
+        return json.dumps({"annotation": chunks})
+
     def check_text(self, force_server):
         settings = get_settings()
         server_url = get_server_url(settings, force_server)
@@ -345,7 +375,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         selection = self.view.sel()[0]  # first selection (ignore rest)
         everything = sublime.Region(0, self.view.size())
         check_region = everything if selection.empty() else selection
-        check_text = self.view.substr(check_region)
+        check_text = self.get_text(check_region)
 
         self.view.run_command("clear_language_problems")
 
