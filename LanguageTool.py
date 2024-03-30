@@ -7,6 +7,7 @@ content to LanguageTool (via http) and highlights reported problems.
 
 import sublime
 import sublime_plugin
+from sublime_lib import ActivityIndicator
 import subprocess
 import os.path
 import fnmatch
@@ -133,7 +134,6 @@ class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
     def run(self, edit, apply_fix):
-
         v = self.view
 
         problems = v.__dict__.get("problems", [])
@@ -206,7 +206,6 @@ class startLanguageToolServerCommand(sublime_plugin.TextCommand):
     """Launch local LanguageTool Server."""
 
     def run(self, edit):
-
         jar_path = get_settings().get("languagetool_jar")
 
         if not jar_path:
@@ -269,7 +268,6 @@ def handle_language_selection(ind, view):
 
 
 def correct_problem(view, edit, problem, replacements):
-
     def clear_and_advance():
         clear_region(view, problem["regionKey"])
         move_caret(view, next_caret_pos, next_caret_pos)  # advance caret
@@ -336,7 +334,9 @@ def get_server_url(settings, force_server):
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
     def run(self, edit, force_server=None):
+        sublime.set_timeout_async(lambda: self.check_text(force_server))
 
+    def check_text(self, force_server):
         settings = get_settings()
         server_url = get_server_url(settings, force_server)
         ignored_scopes = settings.get("ignored-scopes")
@@ -355,9 +355,14 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
         ignored_ids = [rule["id"] for rule in load_ignored_rules()]
 
-        matches = LTServer.getResponse(
-            server_url, check_text, language, ignored_ids, username, apikey
-        )
+        try:
+            self.view.set_read_only(True)
+            with ActivityIndicator(self.view, "LanguageTool"):
+                matches = LTServer.getResponse(
+                    server_url, check_text, language, ignored_ids, username, apikey
+                )
+        finally:
+            self.view.set_read_only(False)
 
         if matches == None:
             set_status_bar(
