@@ -339,7 +339,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
     def get_text(self, check_region):
 
-        # check_text = self.view.substr(check_region)
         spelling_selector = self.view.settings().get("spelling_selector")
 
         chunks = []
@@ -364,6 +363,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             type_name = "text"
         if current_chunk:
             chunks.append({type_name: current_chunk})
+
         return json.dumps({"annotation": chunks})
 
     def check_text(self, force_server):
@@ -385,14 +385,11 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
         ignored_ids = [rule["id"] for rule in load_ignored_rules()]
 
-        try:
-            self.view.set_read_only(True)
-            with ActivityIndicator(self.view, "LanguageTool"):
-                matches = LTServer.getResponse(
-                    server_url, check_text, language, ignored_ids, username, apikey
-                )
-        finally:
-            self.view.set_read_only(False)
+        before = self.view.change_id()
+        with ActivityIndicator(self.view, "LanguageTool"):
+            matches = LTServer.getResponse(
+                server_url, check_text, language, ignored_ids, username, apikey
+            )
 
         if matches == None:
             set_status_bar(
@@ -405,7 +402,9 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             """Return a Region object corresponding to problem text."""
             length = problem["length"]
             offset = problem["offset"]
-            return sublime.Region(offset, offset + length)
+            region = sublime.Region(offset, offset + length)
+            region = self.view.transform_region_from(region, before)
+            return region
 
         def inside(problem):
             """Return True iff problem text is inside check_region."""
@@ -422,8 +421,11 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             region = get_region(problem)
             problem["orgContent"] = self.view.substr(region)
             problem["regionKey"] = region_key
+
+            #style = sublime.DRAW_SQUIGGLY_UNDERLINE + sublime.DRAW_NO_FILL + sublime.DRAW_NO_OUTLINE
+            style = sublime.DRAW_NO_FILL
             self.view.add_regions(
-                region_key, [region], highlight_scope, "", sublime.DRAW_OUTLINED
+                region_key, [region], highlight_scope, "", style,
             )
 
         shifter = lambda problem: shift_offset(problem, check_region.a)
