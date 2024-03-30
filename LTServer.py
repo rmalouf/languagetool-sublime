@@ -1,19 +1,8 @@
 import sublime
 import json
 
-def _is_ST2():
-	return (int(sublime.version()) < 3000)
-
-if _is_ST2():
-	from urllib import urlencode
-	from urllib import urlopen
-else:
-	try:
-		from urlparse import urlencode
-		from urllib2 import urlopen
-	except ImportError:
-		from urllib.parse import urlencode
-		from urllib.request import urlopen
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 def getResponse(server, text, language, disabledRules, username, apikey):
 	payload = {

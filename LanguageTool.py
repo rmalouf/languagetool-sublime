@@ -13,16 +13,8 @@ import fnmatch
 import itertools
 
 
-def _is_ST2():
-    return (int(sublime.version()) < 3000)
-
-
-if _is_ST2():
-    import LTServer
-    import LanguageList
-else:
-    from . import LTServer
-    from . import LanguageList
+from . import LTServer
+from . import LanguageList
 
 
 def move_caret(view, i, j):
@@ -85,14 +77,7 @@ def show_problem(p):
 
 def show_panel_text(text):
     window = sublime.active_window()
-    if _is_ST2():
-        pt = window.get_output_panel("languagetool")
-        pt.set_read_only(False)
-        edit = pt.begin_edit()
-        pt.insert(edit, pt.size(), text)
-        window.run_command("show_panel", {"panel": "output.languagetool"})
-    else:
-        window.run_command('set_language_tool_panel_text', {'str': text})
+    window.run_command('set_language_tool_panel_text', {'str': text})
 
 
 class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):

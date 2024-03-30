@@ -1,10 +1,10 @@
-### LanguageTool for Sublime Text 2/3
+### LanguageTool for Sublime Text 3/4
 
 #### Overview
 
 This is a simple adapter to integrate
 [LanguageTool](https://languagetool.org/) (an open source proof-reading
-program) into Sublime Text 2/3.
+program) into Sublime Text 3/4.
 
 From https://www.languagetool.org/:
 
