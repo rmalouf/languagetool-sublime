@@ -91,7 +91,7 @@ class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
     def run(self, edit, jump_forward=True):
         v = self.view
-        problems = v.__dict__.get("problems", [])
+        problems = v.settings().get("problems", [])
         if len(problems) > 0:
             sel = v.sel()[0]
             if jump_forward:
@@ -115,7 +115,7 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         v = self.view
-        problems = v.__dict__.get("problems", [])
+        problems = v.settings().get("problems", [])
         for p in problems:
             v.erase_regions(p["regionKey"])
         problems = []
@@ -132,7 +132,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
     def run(self, edit, apply_fix):
         v = self.view
 
-        problems = v.__dict__.get("problems", [])
+        problems = v.settings().get("problems", [])
         selected_region = v.sel()[0]
 
         # Find problem corresponding to selection
@@ -163,7 +163,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 
 def choose_suggestion(view, p, replacements, choice):
     """Handle suggestion list selection."""
-    problems = view.__dict__.get("problems", [])
+    problems = v.settings().get("problems", [])
     if choice != -1:
         r = view.get_regions(p["regionKey"])[0]
         view.run_command("insert", {"characters": replacements[choice]})
@@ -393,6 +393,8 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             )
             return
 
+        check_region = self.view.transform_region_from(check_region, before)
+
         def get_region(problem):
             """Return a Region object corresponding to problem text."""
             length = problem["length"]
@@ -441,7 +443,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         else:
             sublime.status_message("no language problems were found :-)")
 
-        self.view.problems = problems
+        self.view.settings().set('problems', problems)
 
 
 def compose(f1, f2):
@@ -503,7 +505,7 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         ignored = load_ignored_rules()
         v = self.view
-        problems = v.__dict__.get("problems", [])
+        problems = v.settings().get("problems", [])
         sel = v.sel()[0]
         selected = [
             p for p in problems if sel.contains(v.get_regions(p["regionKey"])[0])
@@ -552,7 +554,7 @@ class LanguageToolListener(sublime_plugin.EventListener):
 
 
 def recompute_highlights(view):
-    problems = view.__dict__.get("problems", {})
+    problems = view.settings().get("problems", [])
     hscope = get_settings().get("highlight-scope", "comment")
     for p in problems:
         rL = view.get_regions(p["regionKey"])
