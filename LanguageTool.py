@@ -87,6 +87,18 @@ class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
         window.run_command("show_panel", {"panel": "output.languagetool"})
 
 
+class selectProblemAtCursorCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        v = self.view
+        problems = v.settings().get("problems", [])
+        if len(problems) > 0:
+            sel = v.sel()[0]
+            for p in problems:
+                r = v.get_regions(p["regionKey"])[0]
+                if (not is_problem_solved(v, p)) and (r.a < sel.begin() < r.b):
+                    select_problem(v, p)
+
+
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
     def run(self, edit, jump_forward=True):
         v = self.view
