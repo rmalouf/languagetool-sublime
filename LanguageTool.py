@@ -163,7 +163,6 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 
 def choose_suggestion(view, p, replacements, choice):
     """Handle suggestion list selection."""
-    problems = v.settings().get("problems", [])
     if choice != -1:
         r = view.get_regions(p["regionKey"])[0]
         view.run_command("insert", {"characters": replacements[choice]})
