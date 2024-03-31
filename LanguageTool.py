@@ -16,7 +16,6 @@ import sublime_plugin
 from sublime_lib import ActivityIndicator
 
 from . import LTServer
-from . import LanguageList
 
 
 def move_caret(view, i, j):
@@ -247,8 +246,15 @@ class startLanguageToolServerCommand(sublime_plugin.TextCommand):
 
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        self.view.languages = LanguageList.languages
-        languageNames = [x[0] for x in self.view.languages]
+        server_url = get_server_url(get_settings(), False)
+        response = LTServer.getLanguages(server_url)
+        languages = sorted(set((lang["longCode"], lang["name"]) for lang in response))
+        languages = [("Autodetect Language", "auto")] + [
+            (name, code) for code, name in languages
+        ]
+        self.view.settings().set("language_tool_languages", languages)
+
+        languageNames = [x[0] for x in languages]
         handler = lambda ind: handle_language_selection(ind, self.view)
         self.view.window().show_quick_panel(languageNames, handler)
 
@@ -258,7 +264,8 @@ def handle_language_selection(ind, view):
     if ind == 0:
         view.settings().erase(key)
     else:
-        selected_language = view.languages[ind][1]
+        languages = view.settings().get("language_tool_languages")
+        selected_language = languages[ind][1]
         view.settings().set(key, selected_language)
 
 

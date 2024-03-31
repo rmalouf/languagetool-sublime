@@ -2,9 +2,14 @@ import sublime
 import json
 import socket
 
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
+
+
+def getLanguages(server):
+    server = urljoin(server, "languages")
+    return _connect(server, None)
 
 
 def getResponse(server, data, language, disabledRules, username, apikey):
@@ -17,19 +22,21 @@ def getResponse(server, data, language, disabledRules, username, apikey):
     if len(username) > 0 and len(apikey) > 0:
         payload["username"] = username
         payload["apiKey"] = apikey
-    content = _post(server, payload)
-    if content:
-        j = json.loads(content.decode("utf-8"))
-        return j["matches"]
+    response = _connect(server, payload)
+    if response:
+        return response["matches"]
     else:
         return None
 
 
-def _post(server, payload):
+def _connect(server, payload):
     try:
-        data = urlencode(payload).encode("utf8")
-        content = urlopen(server, data, timeout=60).read()
-        return content
+        if payload:
+            payload = urlencode(payload).encode("utf8")
+        content = urlopen(server, payload, timeout=60).read()
+        if content:
+            response = json.loads(content.decode("utf-8"))
+            return response
     except HTTPError as e:
         msg = str(e.code) + " " + e.reason + "\n\n" + e.read().decode("utf-8")
     except URLError:
@@ -38,8 +45,7 @@ def _post(server, payload):
         msg = "Connection timeout"
     except OSError:
         msg = "Unknown error"
-    sublime.set_timeout(lambda: _error(msg), 10)
-    return None
+    sublime.set_timeout(lambda: _error(msg))
 
 
 def _error(msg):

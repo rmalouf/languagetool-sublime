@@ -2,3 +2,6 @@
 2. username/password
 3. drop ST2, add ST4
 4. run command asynchronously
+5. handle connection errors
+6. get list of supported languages from server
+
