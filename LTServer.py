@@ -1,8 +1,10 @@
 import sublime
 import json
+import socket
 
 from urllib.parse import urlencode
 from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 
 
 def getResponse(server, data, language, disabledRules, username, apikey):
@@ -24,10 +26,21 @@ def getResponse(server, data, language, disabledRules, username, apikey):
 
 
 def _post(server, payload):
-    data = urlencode(payload).encode("utf8")
     try:
-        content = urlopen(server, data).read()
+        data = urlencode(payload).encode("utf8")
+        content = urlopen(server, data, timeout=60).read()
         return content
-    except IOError as e:
-        print(e.read())
-        return None
+    except HTTPError as e:
+        msg = str(e.code) + " " + e.reason + "\n\n" + e.read().decode("utf-8")
+    except URLError:
+        msg = "Invalid URL"
+    except socket.timeout:
+        msg = "Connection timeout"
+    except OSError:
+        msg = "Unknown error"
+    sublime.set_timeout(lambda: _error(msg), 10)
+    return None
+
+
+def _error(msg):
+    sublime.error_message("LanguageTool Server Error:\n" + msg)

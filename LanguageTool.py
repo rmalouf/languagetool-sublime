@@ -385,11 +385,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
                 server_url, check_text, language, ignored_ids, username, apikey
             )
 
-        if matches == None:
-            sublime.status_message(
-                "could not parse server response (may be due to"
-                " quota if using https://languagetool.org)"
-            )
+        if matches is None:
             return
 
         check_region = self.view.transform_region_from(check_region, before)
