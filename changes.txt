@@ -4,4 +4,5 @@
 4. run command asynchronously
 5. handle connection errors
 6. get list of supported languages from server
+7. select problem command
 
