@@ -38,6 +38,10 @@
 		"args": {"apply_fix": false}
 	},
 	{
+		"caption": "LanguageTool: Add Word to Dictionary",
+		"command": "add_word_to_dictionary"
+	},
+	{
 		"caption": "LanguageTool: Clear Problems",
 		"command": "clear_language_problems"
 	},

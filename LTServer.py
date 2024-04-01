@@ -1,15 +1,25 @@
-import sublime
 import json
 import socket
-
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urljoin
 from urllib.request import urlopen
-from urllib.error import HTTPError, URLError
+
+import sublime
 
 
 def getLanguages(server):
+    """Get the list of supported languages from the server."""
     server = urljoin(server, "languages")
     return _connect(server, None)
+
+
+def addWordToDict(server, word, username, apikey):
+    payload = {"word": word.encode("utf-8"), "username": username, "apiKey": apikey}
+    server = urljoin(server, "words/add")
+    response = _connect(server, payload)
+    print(word, response)
+    if response:
+        return response["added"]
 
 
 def getResponse(server, data, language, disabledRules, username, apikey):

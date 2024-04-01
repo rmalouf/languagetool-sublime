@@ -123,6 +123,22 @@ class GotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
         )
 
 
+class AddWordToDictionaryCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        settings = lt_settings()
+        server_url = get_server_url(settings, False)
+        username = settings.get("username", "")
+        apikey = settings.get("apikey", "")
+        cur = self.view.sel()[0]
+        word = self.view.substr(self.view.word(cur))
+        result = LTServer.addWordToDict(server_url, word, username, apikey)
+        if result:
+            sublime.status_message(word + " added to default dictionary")
+            self.view.run_command("mark_language_problem_solved", {"apply_fix": False})
+        else:
+            sublime.status_message("failed!")
+
+
 class ClearLanguageProblemsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         v = self.view
@@ -143,8 +159,7 @@ class ClearLanguageProblemsCommand(sublime_plugin.TextCommand):
 class MarkLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
     def run(self, edit, apply_fix):
         v = self.view
-
-        problems = v.settings().get("language_tool_problems", [])
+        problems = v.settings().get("language_tool_problems", None)
         selected_region = v.sel()[0]
 
         # Find problem corresponding to selection
@@ -345,6 +360,8 @@ def get_server_url(settings, force_server):
 
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
+    """"""
+
     def run(self, edit, force_server=None):
         sublime.set_timeout_async(lambda: self.check_text(force_server))
 
@@ -570,7 +587,6 @@ class LanguageToolListener(sublime_plugin.EventListener):
 
 def recompute_highlights(view):
     problems = view.settings().get("language_tool_problems", [])
-    print(problems)
     hscope = lt_settings().get("highlight-scope", "comment")
     for p in problems:
         rL = view.get_regions(p["regionKey"])
